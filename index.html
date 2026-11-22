@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的主页</title>
+  <meta name="description" content="个人主页与作品集">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="container">
+      <div class="avatar" aria-hidden="true">FH</div>
+      <h1>你好，我是 <span class="accent">Feng Hu</span> 👋</h1>
+      <p class="subtitle">前端开发者 · 开源爱好者 · 持续学习中</p>
+      <nav class="links">
+        <a href="https://github.com/" target="_blank" rel="noopener">GitHub</a>
+        <a href="mailto:2913539100@qq.com">邮箱</a>
+        <a href="#projects">项目</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="about">
+      <h2>关于我</h2>
+      <p>
+        这是一个用 GitHub Pages 托管的静态站点。所有内容都是纯 HTML / CSS / JS，
+        没有服务器、没有构建步骤，改完推送即可自动更新。
+      </p>
+      <ul class="tags">
+        <li>HTML</li>
+        <li>CSS</li>
+        <li>JavaScript</li>
+        <li>Git</li>
+      </ul>
+    </section>
+
+    <section id="projects">
+      <h2>项目</h2>
+      <div class="cards">
+        <article class="card">
+          <h3>项目一</h3>
+          <p>一句话介绍这个项目做了什么、解决了什么问题。</p>
+          <a href="#" class="card-link">查看详情 →</a>
+        </article>
+        <article class="card">
+          <h3>项目二</h3>
+          <p>一句话介绍这个项目做了什么、解决了什么问题。</p>
+          <a href="#" class="card-link">查看详情 →</a>
+        </article>
+        <article class="card">
+          <h3>项目三</h3>
+          <p>一句话介绍这个项目做了什么、解决了什么问题。</p>
+          <a href="#" class="card-link">查看详情 →</a>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="container">
+    <p>© <span id="year"></span> Feng Hu · 由 GitHub Pages 托管</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
