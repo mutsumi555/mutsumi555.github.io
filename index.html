@@ -246,9 +246,16 @@ button{font-family:inherit;font-size:inherit;color:inherit;background:none;borde
 
     <div class="section-title">数据</div>
     <div class="grid2">
+      <button class="btn secondary" id="btnExport">⬇ 导出进度</button>
+      <button class="btn secondary" id="btnImport">⬆ 导入进度</button>
+    </div>
+    <div style="height:8px"></div>
+    <div class="grid2">
       <button class="btn secondary" id="btnResetStats">重置全部记录</button>
       <button class="btn secondary" id="btnAbout">使用说明</button>
     </div>
+    <input type="file" id="fileImport" accept="application/json,.json" style="display:none">
+    <p id="syncInfo" style="font-size:11.5px;color:var(--sub);text-align:center;margin:14px 0 0"></p>
     <p style="font-size:11.5px;color:var(--sub);text-align:center;margin:22px 0 8px">
       内容整理自《2027 这就是一页纸解题手册》 · 澄潇宇一页纸 · 仅供个人学习使用
     </p>
@@ -319,6 +326,77 @@ let store = { answers: {}, last: 1 };
 try { const raw = localStorage.getItem(LS); if (raw) store = Object.assign(store, JSON.parse(raw)); } catch (e) {}
 if (!store.answers) store.answers = {};
 const save = () => { try { localStorage.setItem(LS, JSON.stringify(store)); } catch (e) {} };
+
+/* ---------------- 导入 / 导出 ---------------- */
+const EXPORT_VERSION = 1;
+
+function buildProgressPayload() {
+  const answers = {};
+  for (const no in store.answers) {
+    const a = store.answers[no];
+    if (a && a.picked) answers[no] = { picked: a.picked, right: !!a.right };
+  }
+  return {
+    app: 'yzb-quiz',
+    version: EXPORT_VERSION,
+    exportedAt: new Date().toISOString(),
+    last: store.last || 1,
+    answers
+  };
+}
+
+function exportProgress() {
+  const payload = buildProgressPayload();
+  const n = Object.keys(payload.answers).length;
+  if (n === 0) { toast('还没有作答记录可以导出'); return; }
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  const stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+  a.href = url;
+  a.download = '考研政治刷题进度_' + stamp + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('已导出 ' + n + ' 题记录');
+}
+
+function importProgress(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    let data;
+    try { data = JSON.parse(e.target.result); } catch (err) { toast('文件不是合法的 JSON'); return; }
+    if (!data || data.app !== 'yzb-quiz' || typeof data.answers !== 'object') {
+      toast('不是本应用的进度文件'); return;
+    }
+    let valid = 0, skipped = 0;
+    const merged = {};
+    for (const no in data.answers) {
+      const q = QBYNO[no];
+      const rec = data.answers[no];
+      if (!q || !rec || typeof rec.picked !== 'string') { skipped++; continue; }
+      const picked = rec.picked.toUpperCase().split('').filter(ch => /[A-D]/.test(ch)).sort().join('');
+      if (!picked) { skipped++; continue; }
+      merged[no] = { picked, right: picked === q.ans };
+      valid++;
+    }
+    if (valid === 0) { toast('文件里没有可用的作答记录'); return; }
+    const had = Object.keys(store.answers).length;
+    const msg = had > 0
+      ? '当前已有 ' + had + ' 题记录\n导入文件含 ' + valid + ' 题' + (skipped ? '（' + skipped + ' 题无效已跳过）' : '') + '\n\n❓ 确定=合并（保留本地，用文件覆盖同题）  ❌ 取消=放弃导入'
+      : '导入 ' + valid + ' 题记录？' + (skipped ? '（' + skipped + ' 题无效已跳过）' : '');
+    if (!confirm(msg)) return;
+    Object.assign(store.answers, merged);
+    if (typeof data.last === 'number' && data.last >= 1 && data.last <= QS.length) store.last = data.last;
+    save();
+    renderHome();
+    toast('已导入 ' + valid + ' 题记录');
+  };
+  reader.onerror = () => toast('读取文件失败');
+  reader.readAsText(file, 'utf-8');
+}
 
 const $ = id => document.getElementById(id);
 const state = { idx: 0, sel: new Set(), pool: QS.map((_, i) => i), mode: 'all' };
@@ -571,8 +649,15 @@ $('btnClearWrong').onclick = () => {
   save(); renderWrong(); renderHome();
 };
 $('btnResetStats').onclick = () => {
-  if (!confirm('确定重置全部作答记录吗？此操作不可恢复。')) return;
+  if (!confirm('确定重置全部作答记录吗？此操作不可恢复。\n\n建议先点「导出进度」备份一份。')) return;
   store = { answers: {}, last: 1 }; save(); renderHome(); toast('已重置');
+};
+$('btnExport').onclick = exportProgress;
+$('btnImport').onclick = () => $('fileImport').click();
+$('fileImport').onchange = e => {
+  const f = e.target.files && e.target.files[0];
+  if (f) importProgress(f);
+  e.target.value = '';
 };
 $('btnAbout').onclick = () => alert(
   '使用说明\n\n' +
@@ -580,7 +665,8 @@ $('btnAbout').onclick = () => alert(
   '2. 点击「提交答案」后立即显示对错、正确答案和逐题解析。\n' +
   '3. 右上角 ☰ 是答题卡，可直接跳题；答对的显示绿色、答错的显示红色。\n' +
   '4. 首页可按九个专题练习，也可以「随机来一题」「下一道未做」。\n' +
-  '5. 作答记录保存在浏览器本地，换设备或清除浏览器数据会丢失。\n\n' +
+  '5. 作答记录保存在浏览器本地，换设备或清除浏览器数据会丢失。\n' +
+  '6. 换设备时：旧设备点「导出进度」下载 JSON，新设备点「导入进度」选择该文件即可恢复。\n\n' +
   '题目、答案、解析均来自《2027 这就是一页纸·解题方法手册》后半部分遴选题部分。');
 $('btnBack').onclick = $('btnBack2').onclick = () => { renderHome(); view('Home'); };
 
