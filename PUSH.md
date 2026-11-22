@@ -1,50 +1,97 @@
-# 推送到 GitHub 的两种方式（选一种）
+# GitHub 配置完成情况
 
-本地仓库已经建好、也已提交，**只差最后一步推送**。
-仓库位置：`D:\Users\hf\Documents\deepseek-harness\default-workspace\mutsumi555.github.io`
-
----
-
-## 方式 A：网页上传（最省事，无需任何凭据）
-
-1. 打开 https://github.com/new
-2. **Repository name** 填 `mutsumi555.github.io`
-3. 可见性选 **Public**（免费账号的 Pages 必须公开）
-4. **不要**勾选 README / .gitignore / license 任何初始化选项
-5. 点 **Create repository**
-6. 在新页面点 **uploading an existing file** 链接
-7. 打开本地文件夹 `mutsumi555.github.io`，把里面的
-   **`index.html`**、**`README.md`**、**`.gitignore`** 拖进上传框
-   （`.gitignore` 是隐藏文件，看不见的话在资源管理器「查看」里勾选「隐藏的项目」）
-8. 点 **Commit changes**
-9. 进入 **Settings** → 左侧 **Pages**
-10. **Source** 选 `Deploy from a branch`，**Branch** 选 `main` + `/ (root)`，点 **Save**
-11. 等 1–2 分钟，刷新页面，顶部出现绿色提示
-12. 打开 **https://mutsumi555.github.io** 开始刷题
+本机 Git 环境已全部配置好，**只差最后一步：把 SSH 公钥添加到你的 GitHub 账号**。
 
 ---
 
-## 方式 B：命令行推送（需要你自己执行，因为需要登录凭据）
+## 已完成
 
-在 PowerShell 里执行：
+| 项目 | 状态 |
+|---|---|
+| Git 版本 | ✅ 2.49.0 |
+| user.name | ✅ `mutsumi555`（全局 + 仓库级） |
+| user.email | ✅ `2913539100@qq.com`（全局 + 仓库级） |
+| credential.helper | ✅ `manager`（GCM 2.6.1 已安装并启用） |
+| init.defaultBranch | ✅ `main` |
+| core.autocrlf | ✅ `true`（Windows 换行） |
+| SSH 密钥 | ✅ 已生成 `~/.ssh/id_ed25519_github`（ed25519） |
+| 私钥权限 | ✅ 已收紧为仅当前用户可读 |
+| SSH config | ✅ 已添加 `github.com` 主机条目 |
+| known_hosts | ✅ 已记录 github.com |
+| remote | ✅ `git@github.com:mutsumi555/mutsumi555.github.io.git` |
+| 网络连通性 | ✅ SSH 22 端口已连通（`Connection established`） |
+
+---
+
+## 现在要做的：添加公钥（1 分钟）
+
+复制下面整行公钥：
+
+```
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC0te2yGhP/0d2JyjRymh6msvLjkDBSD7LKSC40BGo3A 2913539100@qq.com
+```
+
+然后：
+
+1. 打开 https://github.com/settings/ssh/new
+2. **Title** 随便填，比如 `Windows-PC`
+3. **Key type** 选 `Authentication Key`
+4. **Key** 粘贴上面那一整行
+5. 点 **Add SSH key**
+
+---
+
+## 然后创建仓库并推送
+
+### 1. 创建仓库
+
+打开 https://github.com/new
+
+- **Repository name** 填 `mutsumi555.github.io`（必须完全一致）
+- 选 **Public**
+- **不要**勾选 README / .gitignore / license
+- 点 **Create repository**
+
+### 2. 推送
+
+在你的 PowerShell 窗口里执行：
 
 ```powershell
 cd "D:\Users\hf\Documents\deepseek-harness\default-workspace\mutsumi555.github.io"
 git push -u origin main
 ```
 
-会弹窗要求登录 GitHub（浏览器授权或输入用户名 + Personal Access Token）。
-**注意：这一步必须在你自己的终端里运行**，在 DSH 沙箱内会因禁止命名管道而失败
-（`sh.exe: couldn't create signal pipe, Win32 error 5`）。
+成功的话会看到：
+```
+To github.com:mutsumi555/mutsumi555.github.io.git
+ * [new branch]      main -> main
+```
 
-推送成功后，同样去 **Settings → Pages** 开启一次（方式 A 的第 9–11 步）。
+### 3. 开启 Pages
+
+1. 仓库页 → **Settings** → 左侧 **Pages**
+2. **Source** 选 `Deploy from a branch`
+3. **Branch** 选 `main` + `/ (root)`
+4. 点 **Save**
+5. 等 1–2 分钟，刷新页面，顶部出现绿色提示
+
+### 4. 访问
+
+**https://mutsumi555.github.io**
+
+---
+
+## 验证配置是否成功
+
+```powershell
+ssh -T git@github.com
+```
+
+看到 `Hi mutsumi555! You've successfully authenticated...` 就说明配置完全正确。
 
 ---
 
 ## 之后更新题库
-
-方式 A：网页上重新上传覆盖 `index.html` 即可。
-方式 B：
 
 ```powershell
 cd "D:\Users\hf\Documents\deepseek-harness\default-workspace\mutsumi555.github.io"
@@ -54,16 +101,28 @@ git commit -m "更新题库"
 git push
 ```
 
-Pages 会自动重新部署，约 1 分钟后生效。
-
 ---
 
-## 排错
+## 常见问题
 
 | 现象 | 原因 / 解决 |
 |---|---|
-| 打开是 404 | 仓库名不是 `mutsumi555.github.io`；或 Pages 还没构建完，等 2 分钟 |
-| 显示的是 README 而不是刷题页 | `index.html` 没上传成功，检查仓库根目录是否有这个文件 |
-| Pages 选项灰色 | 仓库是 Private，改成 Public |
-| 推送报 `Authentication failed` | 密码已不可用，需用 Personal Access Token 代替密码 |
-| 推送报 `couldn't create signal pipe` | 在 DSH 沙箱内执行了，换到你自己的 PowerShell 窗口运行 |
+| `Permission denied (publickey)` | 公钥还没加到 GitHub，或加错了账号 |
+| `Could not resolve hostname` | 网络问题，检查代理是否开启 |
+| `Repository not found` | 仓库还没在 GitHub 上创建，或仓库名拼错 |
+| `Host key verification failed` | 执行 `ssh-keygen -R github.com` 后重试 |
+| `schannel: SEC_E_NO_CREDENTIALS` | 在 DSH 沙箱内运行了；换到自己的 PowerShell 窗口 |
+| 打开网站 404 | Pages 还没构建完，等 2 分钟；或仓库名不是 `mutsumi555.github.io` |
+
+---
+
+## 备用方案：HTTPS + Token
+
+如果 SSH 不行，也可以走 HTTPS：
+
+```powershell
+git remote set-url origin https://github.com/mutsumi555/mutsumi555.github.io.git
+git push -u origin main
+```
+
+会弹 GCM 登录窗口，选 **Sign in with your browser** 授权即可。
